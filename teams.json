@@ -1,0 +1,1075 @@
+{
+  "NOBLE WARRIORS": [
+    {
+      "time": 77.73,
+      "date": "2025-11-02T04:30:24.736Z",
+      "players": [
+        "DGDGG",
+        "SPONGE"
+      ],
+      "completed": true
+    },
+    {
+      "time": 29.51,
+      "date": "2025-11-11T03:10:53.942Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL VANGUARD": [
+    {
+      "time": 25.01,
+      "date": "2025-11-09T01:08:01.622Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.35,
+      "date": "2025-11-10T02:20:55.123Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 31.23,
+      "date": "2025-11-11T04:49:56.959Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 33.45,
+      "date": "2025-11-11T05:22:17.499Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 34.46,
+      "date": "2025-11-11T05:22:18.508Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "FEARLESS GUARDIANS": [
+    {
+      "time": 84.71,
+      "date": "2025-11-09T01:10:17.317Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "RAPID DEFENDERS": [
+    {
+      "time": 53.3,
+      "date": "2025-11-09T01:22:52.103Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.04,
+      "date": "2025-11-09T01:38:40.998Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "STEALTH WARRIORS": [
+    {
+      "time": 81.82,
+      "date": "2025-11-09T01:43:15.786Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 79.13,
+      "date": "2025-11-09T08:46:46.209Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-09T08:47:22.376Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 69.86,
+      "date": "2025-11-09T09:48:15.566Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 117.77,
+      "date": "2025-11-09T09:49:03.468Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 117.77,
+      "date": "2025-11-09T09:49:03.473Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL SENTINELS": [
+    {
+      "time": 82.47,
+      "date": "2025-11-09T01:45:47.420Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "ELITE SENTINELS": [
+    {
+      "time": 74.33,
+      "date": "2025-11-09T01:47:49.667Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "RAPID PHANTOMS": [
+    {
+      "time": 80.98,
+      "date": "2025-11-09T01:53:53.238Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 70.11,
+      "date": "2025-11-09T02:39:09.232Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 29.02,
+      "date": "2025-11-10T03:59:14.124Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.04,
+      "date": "2025-11-10T03:59:14.138Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "FEARLESS WARRIORS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-09T01:58:01.521Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.52,
+      "date": "2025-11-11T04:37:20.393Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "PRECISE SPARTANS": [
+    {
+      "time": 64.22,
+      "date": "2025-11-09T02:07:14.231Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "STEALTH DEFENDERS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-09T03:20:21.324Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "PRECISE STRIKERS": [
+    {
+      "time": 85.78,
+      "date": "2025-11-09T03:22:50.640Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 29.02,
+      "date": "2025-11-10T02:04:24.593Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.03,
+      "date": "2025-11-10T02:04:24.601Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-11T04:40:01.237Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "VALIANT GUARDIANS": [
+    {
+      "time": 84.07,
+      "date": "2025-11-09T08:01:25.577Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 1762675324.63,
+      "date": "2025-11-09T08:02:04.635Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL STRIKERS": [
+    {
+      "time": 80.55,
+      "date": "2025-11-09T08:11:30.580Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 25,
+      "date": "2025-11-09T08:12:09.641Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.05,
+      "date": "2025-11-11T04:45:53.798Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "RAPID WARRIORS": [
+    {
+      "time": 49.98,
+      "date": "2025-11-09T08:54:32.476Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-09T08:55:25.318Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL PHANTOMS": [
+    {
+      "time": 62.16,
+      "date": "2025-11-09T09:18:20.374Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 25.01,
+      "date": "2025-11-09T09:19:08.595Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.01,
+      "date": "2025-11-09T09:19:08.599Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.54,
+      "date": "2025-11-11T03:19:07.444Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "NOBLE PHANTOMS": [
+    {
+      "time": 68.96,
+      "date": "2025-11-09T09:28:48.022Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 25.01,
+      "date": "2025-11-09T09:29:36.054Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.51,
+      "date": "2025-11-11T05:10:12.339Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.52,
+      "date": "2025-11-12T01:03:08.805Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "RAPID GUARDIANS": [
+    {
+      "time": 53.12,
+      "date": "2025-11-09T09:40:14.591Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "ELITE DEFENDERS": [
+    {
+      "time": 67.17,
+      "date": "2025-11-09T16:22:34.297Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 67.2,
+      "date": "2025-11-09T16:22:34.320Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 114.88,
+      "date": "2025-11-09T16:23:22.008Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.8,
+      "date": "2025-11-10T02:19:07.699Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "PRECISE DEFENDERS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-09T16:25:08.107Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-09T16:25:08.116Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "PRECISE WARRIORS": [
+    {
+      "time": 29.12,
+      "date": "2025-11-09T17:44:36.183Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 79.14,
+      "date": "2025-11-09T17:45:26.202Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "STEALTH GUARDIANS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-10T01:42:18.962Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "ELITE GUARDIANS": [
+    {
+      "time": 24.4,
+      "date": "2025-11-10T01:58:41.097Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    }
+  ],
+  "FEARLESS SENTINELS": [
+    {
+      "time": 23.01,
+      "date": "2025-11-10T02:01:30.573Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 29.01,
+      "date": "2025-11-10T03:55:00.024Z",
+      "players": [
+        "SPONGE",
+        "REX",
+        "TEST2",
+        "XAVIER"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.01,
+      "date": "2025-11-11T05:00:59.720Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "VALIANT VANGUARD": [
+    {
+      "time": 29.02,
+      "date": "2025-11-10T02:02:50.059Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.03,
+      "date": "2025-11-10T02:02:50.066Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "STEALTH STRIKERS": [
+    {
+      "time": 32.64,
+      "date": "2025-11-10T02:23:11.259Z",
+      "players": [
+        "TEST1",
+        "TEST2"
+      ],
+      "completed": true
+    },
+    {
+      "time": 29.54,
+      "date": "2025-11-11T03:31:40.816Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "RAPID SENTINELS": [
+    {
+      "time": 29.01,
+      "date": "2025-11-10T03:48:43.919Z",
+      "players": [
+        "TEST2",
+        "SPONGE",
+        "JED",
+        "XAVIER"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 102.71,
+      "date": "2025-11-10T03:49:57.614Z",
+      "players": [
+        "TEST2",
+        "SPONGE",
+        "JED",
+        "XAVIER"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 102.71,
+      "date": "2025-11-10T03:49:57.618Z",
+      "players": [
+        "TEST2",
+        "SPONGE",
+        "JED",
+        "XAVIER"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.52,
+      "date": "2025-11-12T00:13:23.763Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL WARRIORS": [
+    {
+      "time": 29.05,
+      "date": "2025-11-10T04:02:27.858Z",
+      "players": [
+        "TEST1",
+        "TEST3",
+        "TEST4",
+        "TEST2"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "TACTICAL SPARTANS": [
+    {
+      "time": 29.54,
+      "date": "2025-11-11T03:05:12.439Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "ELITE VANGUARD": [
+    {
+      "time": 29.52,
+      "date": "2025-11-11T03:21:20.367Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 98.12,
+      "date": "2025-11-11T03:22:28.966Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "VALIANT SENTINELS": [
+    {
+      "time": 30.16,
+      "date": "2025-11-11T03:35:36.699Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "STEALTH SENTINELS": [
+    {
+      "time": 25.02,
+      "date": "2025-11-11T03:38:15.001Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "NOBLE SPARTANS": [
+    {
+      "time": 34.52,
+      "date": "2025-11-11T03:48:17.696Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 35.01,
+      "date": "2025-11-11T03:48:18.190Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-11T04:35:33.660Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-11T04:35:33.666Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "NOBLE VANGUARD": [
+    {
+      "time": 25.02,
+      "date": "2025-11-11T04:42:45.947Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 25.02,
+      "date": "2025-11-11T04:42:45.953Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.54,
+      "date": "2025-11-11T04:48:08.937Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "RAPID SPARTANS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-11T04:52:35.376Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.55,
+      "date": "2025-11-12T01:28:04.731Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "RAPID VANGUARD": [
+    {
+      "time": 43.96,
+      "date": "2025-11-11T04:55:26.434Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "NOBLE STRIKERS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-11T04:58:08.825Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "VALIANT SPARTANS": [
+    {
+      "time": 25.02,
+      "date": "2025-11-11T05:03:25.278Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "PRECISE PHANTOMS": [
+    {
+      "time": 25.01,
+      "date": "2025-11-11T05:18:29.150Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "FEARLESS SPARTANS": [
+    {
+      "time": 25.03,
+      "date": "2025-11-11T23:39:01.272Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "NOBLE SENTINELS": [
+    {
+      "time": 29.51,
+      "date": "2025-11-12T04:13:24.292Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.55,
+      "date": "2025-11-12T04:20:03.324Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    },
+    {
+      "time": 29.55,
+      "date": "2025-11-12T04:20:03.327Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "VALIANT STRIKERS": [
+    {
+      "time": 29.51,
+      "date": "2025-11-12T04:32:50.389Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ],
+  "PRECISE VANGUARD": [
+    {
+      "time": 29.52,
+      "date": "2025-11-12T04:35:08.089Z",
+      "players": [
+        "TEST1",
+        "TEST2",
+        "TEST3",
+        "TEST4"
+      ],
+      "timeout": true,
+      "completed": false
+    }
+  ]
+}

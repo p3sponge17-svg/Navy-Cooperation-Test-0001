@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>U.S. Naval Cooperation Test</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <!-- Room Code Display (shown after joining) -->
+  <div id="roomCodeBanner" class="room-code-banner">
+    <div class="room-code-content">
+      <span class="room-code-label">ROOM CODE:</span>
+      <span id="roomCodeValue" class="room-code-value">----</span>
+      <button id="copyRoomCode" class="copy-btn" onclick="copyRoomCode()">COPY</button>
+    </div>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobbyScreen" class="screen active">
+    <!-- NEW: Lobby Browser Screen - Shows available rooms -->
+    <div id="lobbyBrowser" class="lobby-section active">
+      <h1>U.S. NAVAL COOPERATION TEST</h1>
+      <h2 class="lobby-subtitle">ACTIVE MISSIONS - PILOTS WAITING</h2>
+      
+      <div id="availableRoomsList" class="available-rooms-list">
+        <!-- Dynamic content will be inserted here -->
+        <div class="no-rooms-message">
+          <div class="scanning-icon">🛰️</div>
+          <p>SCANNING FOR ACTIVE MISSIONS...</p>
+          <div class="pulse-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="lobby-actions">
+        <button onclick="showCreateRoom()" class="create-room-btn">CREATE NEW MISSION</button>
+        <button onclick="showPrivateRoomJoin()" class="private-room-btn">JOIN PRIVATE ROOM</button>
+      </div>
+      
+      <div class="help-text">4-PLAYER COOPERATIVE MISSIONS</div>
+    </div>
+    
+    <!-- Username Screen -->
+    <div id="usernameScreen" class="lobby-section">
+      <h1>U.S. NAVAL COOPERATION TEST</h1>
+      
+      <!-- Shows info about room being joined -->
+      <div id="joiningRoomInfo" class="joining-room-info" style="display: none;">
+        <div class="joining-label">JOINING MISSION:</div>
+        <div id="joiningTeamName" class="joining-team-name"></div>
+        <div id="joiningPlayersList" class="joining-players-list"></div>
+      </div>
+      
+      <div class="input-container">
+        <input type="text" id="usernameInput" placeholder="ENTER YOUR CALL SIGN" maxlength="20" />
+        <input type="text" id="roomCodeInput" placeholder="ROOM CODE (FOR PRIVATE ROOMS)" maxlength="10" 
+               style="margin-top: 20px; text-transform: uppercase; display: none;" />
+        <button onclick="submitUsername()">COMMIT</button>
+        <button onclick="backToLobby()" class="back-btn">← BACK TO LOBBY</button>
+      </div>
+      <div class="help-text">ENTER YOUR PILOT CALL SIGN</div>
+    </div>
+    
+    <!-- Color Assignment Screen -->
+    <div id="colorScreen" class="lobby-section">
+      <div class="color-content">
+        <h2 id="colorAssignment">YOU ARE <span id="assignedColor"></span></h2>
+        
+        <!-- Players Waiting Indicator -->
+        <div id="playersWaitingIndicator" class="players-waiting">
+          <div class="waiting-label">PILOTS IN ROOM:</div>
+          <div id="playersWaitingList" class="players-list">
+            <span class="player-indicator pulsing">You</span>
+          </div>
+        </div>
+        <p id="waitingMessage">WAITING FOR OTHER PLAYERS TO JOIN</p>
+        <div class="pulse-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Confirmation Screen -->
+    <div id="colorConfirmationScreen" class="lobby-section">
+      <div class="color-confirmation-content">
+        <h2 id="colorConfirmation">YOU ARE <span id="confirmedColor"></span></h2>
+        <p class="confirmation-subtitle">PREPARE FOR MISSION</p>
+      </div>
+    </div>
+
+    <!-- NEW: 4-Player Grid Countdown Screen (replaces simple countdown) -->
+    <div id="fourPlayerCountdownScreen" class="lobby-section">
+      <div class="four-player-grid-container">
+        <!-- Top Left: Yellow -->
+        <div class="player-quadrant" id="quadrant-yellow">
+          <div class="checkmark yellow-check">✓</div>
+          <div class="player-name" id="name-yellow">LOADING...</div>
+          <div class="player-ip" id="ip-yellow">---.---.XXX.XXX</div>
+        </div>
+        
+        <!-- Top Right: Blue -->
+        <div class="player-quadrant" id="quadrant-blue">
+          <div class="checkmark blue-check">✓</div>
+          <div class="player-name" id="name-blue">LOADING...</div>
+          <div class="player-ip" id="ip-blue">---.---.XXX.XXX</div>
+        </div>
+        
+        <!-- Bottom Left: Red -->
+        <div class="player-quadrant" id="quadrant-red">
+          <div class="checkmark red-check">✓</div>
+          <div class="player-name" id="name-red">LOADING...</div>
+          <div class="player-ip" id="ip-red">---.---.XXX.XXX</div>
+        </div>
+        
+        <!-- Bottom Right: Green -->
+        <div class="player-quadrant" id="quadrant-green">
+          <div class="checkmark green-check">✓</div>
+          <div class="player-name" id="name-green">LOADING...</div>
+          <div class="player-ip" id="ip-green">---.---.XXX.XXX</div>
+        </div>
+        
+        <!-- Center Countdown Timer -->
+        <div class="center-countdown">
+          <div class="countdown-label">THE TEST BEGINS IN:</div>
+          <div class="countdown-timer" id="fourPlayerCountdownTimer">00:00:10</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Screen - Four Sections in 2x2 Grid -->
+  <div id="gameScreen" class="screen">
+    <div id="roundIndicator">ROUND 1 OF 3</div>
+    <div class="container four-player-container">
+      <!-- Player 1 Section (Top-Left) -->
+      <div class="section" id="section1">
+        <h4 id="gameTitle1">LOADING GAME...</h4>
+        <div id="grid1" class="game-grid"></div>
+        <div id="colorMatchGame1" class="color-match-container"></div>
+        <div id="countdownDots1" class="countdown-dots"></div>
+        <div id="statusMessage1" class="status-message"></div>
+      </div>
+
+      <!-- Player 2 Section (Top-Right) -->
+      <div class="section" id="section2">
+        <h4 id="gameTitle2">LOADING GAME...</h4>
+        <div id="grid2" class="game-grid"></div>
+        <div id="colorMatchGame2" class="color-match-container"></div>
+        <div id="countdownDots2" class="countdown-dots"></div>
+        <div id="statusMessage2" class="status-message"></div>
+      </div>
+
+      <!-- Player 3 Section (Bottom-Left) -->
+      <div class="section" id="section3">
+        <h4 id="gameTitle3">LOADING GAME...</h4>
+        <div id="grid3" class="game-grid"></div>
+        <div id="colorMatchGame3" class="color-match-container"></div>
+        <div id="countdownDots3" class="countdown-dots"></div>
+        <div id="statusMessage3" class="status-message"></div>
+      </div>
+
+      <!-- Player 4 Section (Bottom-Right) -->
+      <div class="section" id="section4">
+        <h4 id="gameTitle4">LOADING GAME...</h4>
+        <div id="grid4" class="game-grid"></div>
+        <div id="colorMatchGame4" class="color-match-container"></div>
+        <div id="countdownDots4" class="countdown-dots"></div>
+        <div id="statusMessage4" class="status-message"></div>
+      </div>
+    </div>
+    <div id="gameTimer">TIME: 0.00s</div>
+  </div>
+
+  <!-- Number Sequence Game Screen -->
+  <div id="numberSequenceScreen" class="screen">
+    <h2 id="numberSequenceTitle">CLICK ON THE CIRCLES WITH YOUR COLOR. START WITH THE LOWEST NUMBER. WAIT FOR YOUR TURN.</h2>
+    <div id="numberSequenceGame"></div>
+    <div id="numberSequenceTimer"></div>
+    <div id="numberSequenceStatus">CLICK NUMBER 1 TO START</div>
+  </div>
+
+  <!-- Results Screen - Blue Angels Themed with Jet Flyby -->
+  <div id="resultsScreen" class="screen">
+    <!-- Blue Angels Jet -->
+    <img id="blueAngelJet" src="blueangel_3.png" alt="Blue Angel Jet" class="blue-angel-jet">
+    
+    <!-- Canvases for effects -->
+    <canvas id="confettiCanvas"></canvas>
+    <canvas id="smokeCanvas"></canvas>
+    
+    <div class="results-container">
+      <div class="results-header">
+        <div id="missionStatus" class="mission-status">MISSION COMPLETE</div>
+        <div id="teamNameDisplay" class="team-name-display"></div>
+        <div id="teamPilotsDisplay" class="team-pilots-display"></div>
+      </div>
+      
+      <!-- UPDATED: 2-Column Layout for Stats -->
+      <div class="results-main-grid">
+        <!-- Left Column: Primary Stats -->
+        <div class="results-column">
+          <div class="results-stats">
+            <div class="stat-card">
+              <div class="stat-label">MISSION TIME</div>
+              <div id="finalTime" class="stat-value"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">TEAM RANK</div>
+              <div id="finalRank" class="stat-value"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">TOTAL TEAMS</div>
+              <div id="totalTeams" class="stat-value"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">BEST TIME</div>
+              <div id="bestTime" class="stat-value"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Details -->
+        <div class="results-column">
+          <div class="results-details">
+            <div class="detail-row">
+              <span class="detail-label">ROUNDS COMPLETED:</span>
+              <span id="roundsCompleted" class="detail-value">3/3</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">GAMES PLAYED:</span>
+              <span id="gamesPlayed" class="detail-value">0</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">COOPERATION SCORE:</span>
+              <span id="coopScore" class="detail-value">EXCELLENT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP 3 LEADERBOARD -->
+      <div class="leaderboard-section">
+        <h3 class="leaderboard-title">🏆 TOP ELITE TEAMS 🏆</h3>
+        <div class="leaderboard">
+          <!-- 1st Place -->
+          <div class="leaderboard-entry rank-1">
+            <div class="rank-badge gold">1ST</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam1Name">---</div>
+              <div class="team-pilots" id="topTeam1Pilots">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam1Time">--.-s</div>
+          </div>
+          
+          <!-- 2nd Place -->
+          <div class="leaderboard-entry rank-2">
+            <div class="rank-badge silver">2ND</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam2Name">---</div>
+              <div class="team-pilots" id="topTeam2Pilots">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam2Time">--.-s</div>
+          </div>
+          
+          <!-- 3rd Place -->
+          <div class="leaderboard-entry rank-3">
+            <div class="rank-badge bronze">3RD</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam3Name">---</div>
+              <div class="team-pilots" id="topTeam3Pilots">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam3Time">--.-s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: Re-engage status and buttons -->
+      <div class="action-buttons">
+        <button id="reengageBtn" class="reengage-btn" onclick="reengageWithTeam()">
+          <span class="btn-icon">🤝</span>
+          RE-ENGAGE WITH TEAM
+        </button>
+        <div id="reengageStatus" class="reengage-status" style="display: none;">
+          <div class="status-icon">⏳</div>
+          <div class="status-text">WAITING FOR TEAMMATE...</div>
+          <div class="pulse-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <button id="playAgainBtn" class="play-again-btn" onclick="location.reload()">NEW MISSION</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Failure Screen - Crash and Burn -->
+  <div id="failureScreen" class="screen">
+    <!-- Video Background -->
+    <video id="failureVideo" autoplay muted loop playsinline preload="auto" class="failure-bg-video">
+      <source src="crash_and_burn.mp4" type="video/mp4">
+    </video>
+    
+    <!-- Dark overlay for better text readability -->
+    <div class="failure-overlay"></div>
+    
+    <div class="failure-container">
+      <div class="failure-header">
+        <div class="mission-status failure">⚠️ MISSION FAILED ⚠️</div>
+        <div id="teamNameDisplayFailure" class="team-name-display"></div>
+        <div id="teamPilotsDisplayFailure" class="team-pilots-display"></div>
+      </div>
+      
+      <!-- UPDATED: 2-Column Layout for Stats on Failure Screen Too -->
+      <div class="results-main-grid">
+        <div class="results-column">
+          <div class="results-stats">
+            <div class="stat-card">
+              <div class="stat-label">TIME ELAPSED</div>
+              <div id="finalTimeFailure" class="stat-value"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">ROUNDS COMPLETED</div>
+              <div id="roundsCompletedFailure" class="stat-value"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="results-column">
+          <div class="results-stats">
+            <div class="stat-card">
+              <div class="stat-label">GAMES COMPLETED</div>
+              <div id="gamesCompletedFailure" class="stat-value"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">FAILURE REASON</div>
+              <div id="failureReason" class="stat-value">TIMEOUT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP 3 LEADERBOARD -->
+      <div class="leaderboard-section">
+        <h3 class="leaderboard-title">🏆 TOP ELITE TEAMS 🏆</h3>
+        <div class="leaderboard">
+          <!-- 1st Place -->
+          <div class="leaderboard-entry rank-1">
+            <div class="rank-badge gold">1ST</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam1NameFail">---</div>
+              <div class="team-pilots" id="topTeam1PilotsFail">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam1TimeFail">--.-s</div>
+          </div>
+          
+          <!-- 2nd Place -->
+          <div class="leaderboard-entry rank-2">
+            <div class="rank-badge silver">2ND</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam2NameFail">---</div>
+              <div class="team-pilots" id="topTeam2PilotsFail">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam2TimeFail">--.-s</div>
+          </div>
+          
+          <!-- 3rd Place -->
+          <div class="leaderboard-entry rank-3">
+            <div class="rank-badge bronze">3RD</div>
+            <div class="team-info">
+              <div class="team-name-leader" id="topTeam3NameFail">---</div>
+              <div class="team-pilots" id="topTeam3PilotsFail">Loading...</div>
+            </div>
+            <div class="team-time" id="topTeam3TimeFail">--.-s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: Re-engage status and buttons on failure screen too -->
+      <div class="action-buttons">
+        <button id="reengageBtnFail" class="reengage-btn" onclick="reengageWithTeam()">
+          <span class="btn-icon">🤝</span>
+          RE-ENGAGE WITH TEAM
+        </button>
+        <div id="reengageStatusFail" class="reengage-status" style="display: none;">
+          <div class="status-icon">⏳</div>
+          <div class="status-text">WAITING FOR TEAMMATE...</div>
+          <div class="pulse-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <button id="retryBtn" class="play-again-btn" onclick="location.reload()">TRY AGAIN</button>
+      </div>
+    </div>
+  </div>
+  <audio id="countdownAudio" preload="auto">
+    <source src="" type="audio/mpeg">
+  </audio>
+  
+  <!-- Jet sound -->
+  <audio id="jetSound" preload="auto">
+    <source src="jet_sound.mp3" type="audio/mpeg">
+  </audio>
+  
+  <!-- Sound effect placeholders -->
+  <audio id="correctSound" preload="auto" style="display: none;"></audio>
+  <audio id="wrongSound" preload="auto" style="display: none;"></audio>
+  <audio id="victorySound" preload="auto" style="display: none;"></audio>
+</body>
+</html>

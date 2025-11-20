@@ -27,8 +27,9 @@ const reengageStatus = {};
 // Game constants
 const GAME_CONSTANTS = {
   TOTAL_ROUNDS: 3,
-  INITIAL_COUNTDOWN: 25,
-  PERSONAL_TIMER_START: 25,
+  INITIAL_COUNTDOWN: 100,  // 25 dots × 4 seconds each = 100 seconds
+  PERSONAL_TIMER_START: 100,  // 25 dots × 4 seconds each = 100 seconds
+  NUMBER_SEQUENCE_TIME: 100,  // 25 dots × 4 seconds each = 100 seconds
   SUCCESS_BONUS: 4,
   FAILURE_PENALTY: 3
 };
@@ -187,15 +188,18 @@ function generateNumberSequence(players) {
   // Shuffle numbers randomly between players
   const shuffled = [...numbers].sort(() => Math.random() - 0.5);
   
-  // Assign 6 numbers to each player
+  // Assign numbers evenly to each player (12 numbers / 4 players = 3 each)
   const playerColors = Object.keys(players);
+  const numbersPerPlayer = Math.floor(12 / playerColors.length); // 3 for 4 players
+  
   playerColors.forEach((color, playerIndex) => {
-    const playerNumbers = shuffled.slice(playerIndex * 6, (playerIndex + 1) * 6);
+    const playerNumbers = shuffled.slice(playerIndex * numbersPerPlayer, (playerIndex + 1) * numbersPerPlayer);
     playerNumbers.forEach(num => {
       sequence[num] = color;
     });
   });
   
+  console.log(`Generated number sequence for ${playerColors.length} players (${numbersPerPlayer} numbers each):`, sequence);
   return sequence;
 }
 
@@ -215,7 +219,13 @@ function generateNumberSequencePositions() {
       y = Math.floor(Math.random() * 70) + 15;
       positionKey = `${x},${y}`;
       
-      if (!usedPositions.has(positionKey)) {
+      // Check if position is too close to center (where Total Time clock is)
+      const centerX = 50;
+      const centerY = 50;
+      const distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+      const minCenterDistance = 20; // Minimum distance from center to avoid clock
+      
+      if (!usedPositions.has(positionKey) && distanceFromCenter >= minCenterDistance) {
         // Check if this position is too close to existing positions
         let tooClose = false;
         for (const existingKey of usedPositions) {
@@ -236,15 +246,27 @@ function generateNumberSequencePositions() {
       attempts++;
     }
     
-    // If no valid position found after attempts, use a grid-based fallback
+    // If no valid position found after attempts, use a grid-based fallback (avoiding center)
     if (!validPosition) {
       const cols = 4;
       const rows = 3;
       const col = (number - 1) % cols;
       const row = Math.floor((number - 1) / cols);
       
-      x = col * 20 + 15 + (Math.random() * 10 - 5); // Add small random offset
-      y = row * 25 + 15 + (Math.random() * 10 - 5); // Add small random offset
+      // Position in corners and edges, avoiding center
+      if (col < 2) {
+        x = col * 20 + 15 + (Math.random() * 5);
+      } else {
+        x = col * 20 + 25 + (Math.random() * 5);
+      }
+      
+      if (row === 1) {
+        // Middle row - push to sides
+        y = col < 2 ? row * 25 + 10 : row * 25 + 30;
+      } else {
+        y = row * 25 + 15 + (Math.random() * 10 - 5);
+      }
+      
       positionKey = `${x},${y}`;
     }
     
@@ -307,6 +329,11 @@ function startServerTimerCountdown(room) {
       return;
     }
     
+    // Skip countdown during Number Sequence
+    if (rooms[room].inNumberSequence) {
+      return; // Don't count down personal timers during Number Sequence
+    }
+    
     // Decrement all personal timers
     const playerColors = Object.keys(rooms[room].personalTimers);
     playerColors.forEach(color => {
@@ -320,24 +347,26 @@ function startServerTimerCountdown(room) {
       personalTimers: rooms[room].personalTimers
     });
     
-    // Check if any timer has expired
-    const expiredPlayer = playerColors.find(
-      color => rooms[room].personalTimers[color] <= 0
-    );
-    
-    if (expiredPlayer) {
-      console.log(`⏰ Player ${expiredPlayer}'s timer expired in room ${room}! Game Over.`);
-      rooms[room].gameActive = false;
+    // Check if any timer has expired (but not during Number Sequence)
+    if (!rooms[room].inNumberSequence) {
+      const expiredPlayer = playerColors.find(
+        color => rooms[room].personalTimers[color] <= 0
+      );
       
-      // Clear the interval
-      clearInterval(rooms[room].timerInterval);
-      rooms[room].timerInterval = null;
-      
-      // Notify all players
-      io.to(room).emit('playerTimerExpired', {
-        color: expiredPlayer,
-        personalTimers: rooms[room].personalTimers
-      });
+      if (expiredPlayer) {
+        console.log(`⏰ Player ${expiredPlayer}'s timer expired in room ${room}! Game Over.`);
+        rooms[room].gameActive = false;
+        
+        // Clear the interval
+        clearInterval(rooms[room].timerInterval);
+        rooms[room].timerInterval = null;
+        
+        // Notify all players
+        io.to(room).emit('playerTimerExpired', {
+          color: expiredPlayer,
+          personalTimers: rooms[room].personalTimers
+        });
+      }
     }
   }, 1000); // Run every 1 second
 }
@@ -349,6 +378,114 @@ function stopServerTimerCountdown(room) {
     clearInterval(rooms[room].timerInterval);
     rooms[room].timerInterval = null;
   }
+}
+
+// Start Number Sequence timer (server-authoritative)
+function startNumberSequenceTimer(room) {
+  if (!rooms[room]) return;
+  
+  // Clear any existing interval
+  if (rooms[room].numberSequenceTimerInterval) {
+    clearInterval(rooms[room].numberSequenceTimerInterval);
+  }
+  
+  // Reset timer to full
+  rooms[room].numberSequenceTimer = GAME_CONSTANTS.NUMBER_SEQUENCE_TIME;
+  
+  console.log(`⏱️  Starting Number Sequence timer countdown for room ${room}`);
+  
+  // Count down every second
+  rooms[room].numberSequenceTimerInterval = setInterval(() => {
+    if (!rooms[room] || !rooms[room].gameActive || !rooms[room].inNumberSequence) {
+      console.log(`Stopping Number Sequence timer for room ${room}`);
+      if (rooms[room] && rooms[room].numberSequenceTimerInterval) {
+        clearInterval(rooms[room].numberSequenceTimerInterval);
+        rooms[room].numberSequenceTimerInterval = null;
+      }
+      return;
+    }
+    
+    // Decrement timer
+    if (rooms[room].numberSequenceTimer > 0) {
+      rooms[room].numberSequenceTimer--;
+    }
+    
+    // Broadcast current timer state to all clients
+    io.to(room).emit('numberSequenceTimerUpdate', {
+      timer: rooms[room].numberSequenceTimer
+    });
+    
+    // Check if timer expired
+    if (rooms[room].numberSequenceTimer <= 0) {
+      console.log(`⏰ Number Sequence timer expired in room ${room}! Game Over.`);
+      rooms[room].gameActive = false;
+      
+      // Clear the interval
+      clearInterval(rooms[room].numberSequenceTimerInterval);
+      rooms[room].numberSequenceTimerInterval = null;
+      
+      // Notify all players
+      io.to(room).emit('numberSequenceFailed', {
+        reason: 'Timer expired'
+      });
+    }
+  }, 1000); // Run every 1 second
+}
+
+// Stop Number Sequence timer
+function stopNumberSequenceTimer(room) {
+  if (rooms[room] && rooms[room].numberSequenceTimerInterval) {
+    console.log(`⏱️  Stopping Number Sequence timer for room ${room}`);
+    clearInterval(rooms[room].numberSequenceTimerInterval);
+    rooms[room].numberSequenceTimerInterval = null;
+  }
+}
+
+// Start random trigger for Number Sequence (60-90 seconds)
+function startNumberSequenceTrigger(room) {
+  if (!rooms[room]) return;
+  
+  // Clear any existing trigger
+  if (rooms[room].numberSequenceTrigger) {
+    clearTimeout(rooms[room].numberSequenceTrigger);
+  }
+  
+  // Random time between 60-90 seconds (60000-90000 ms)
+  const triggerTime = Math.floor(Math.random() * 30000) + 60000;
+  console.log(`🎯 Number Sequence trigger set for ${triggerTime/1000}s in room ${room}`);
+  
+  rooms[room].numberSequenceTrigger = setTimeout(() => {
+    if (!rooms[room] || !rooms[room].gameActive) return;
+    
+    console.log(`🚨 FORCED NUMBER SEQUENCE in room ${room}!`);
+    
+    // CRITICAL: Set flag FIRST to stop timer countdown immediately
+    rooms[room].inNumberSequence = true;
+    
+    // Reset all timers to full (safe now that countdown is paused)
+    Object.keys(rooms[room].personalTimers).forEach(color => {
+      rooms[room].personalTimers[color] = GAME_CONSTANTS.PERSONAL_TIMER_START;
+    });
+    
+    // Generate number sequence
+    rooms[room].numberSequenceState = generateNumberSequence(rooms[room].players);
+    rooms[room].currentSequence = 1;
+    
+    // Generate positions and start number sequence
+    const positions = generateNumberSequencePositions();
+    io.to(room).emit('forceNumberSequence', {
+      sequenceData: rooms[room].numberSequenceState,
+      players: rooms[room].players,
+      positions: positions,
+      personalTimers: rooms[room].personalTimers,
+      numberSequenceTimer: rooms[room].numberSequenceTimer
+    });
+    
+    // Start server-side Number Sequence timer
+    startNumberSequenceTimer(room);
+    
+    console.log('Number sequence forced with full timers:', rooms[room].personalTimers);
+  }, triggerTime);
 }
 
 
@@ -424,6 +561,12 @@ io.on('connection', socket => {
         },
         timerInterval: null  // Store the countdown interval ID
       };
+      
+      // Initialize mini-games mode trigger
+      rooms[room].inNumberSequence = false;
+      rooms[room].numberSequenceTrigger = null;  // Will store timeout for random trigger
+      rooms[room].numberSequenceTimerInterval = null;  // Will store Number Sequence countdown interval
+      rooms[room].numberSequenceTimer = GAME_CONSTANTS.NUMBER_SEQUENCE_TIME;  // 100 seconds
     }
 
     // Check if room is full
@@ -544,6 +687,9 @@ io.on('connection', socket => {
           // Start server-side authoritative timer countdown
           startServerTimerCountdown(room);
           
+          // Start random trigger for Number Sequence (60-90 seconds)
+          startNumberSequenceTrigger(room);
+          
           console.log(`Game started in room ${room} - Round 1 assignments:`, gameAssignments);
         }
       }, 13000); // 10s countdown + 3s confirmation
@@ -575,13 +721,19 @@ io.on('connection', socket => {
       return;
     }
 
+    // Skip if in number sequence mode
+    if (rooms[room].inNumberSequence) {
+      console.log(`⚠️  Ignoring roundComplete during number sequence`);
+      return;
+    }
+
     // Check if this player has already completed their current game
     if (rooms[room].gameCompletionTracking[color]) {
       console.log(`⚠️  ${color} already completed this game - ignoring duplicate`);
       return;
     }
 
-    console.log(`Player ${color} completed round ${rooms[room].currentRound + 1} in room ${room} - Success: ${success}`);
+    console.log(`Player ${color} completed game in room ${room} - Success: ${success}`);
     
     // Mark this player as having completed their current game
     rooms[room].gameCompletionTracking[color] = true;
@@ -610,7 +762,7 @@ io.on('connection', socket => {
     // Broadcast updated timers to all players
     io.to(room).emit('timerUpdate', { 
       personalTimers: rooms[room].personalTimers,
-      bonusReceiver: partnerColor,  // Tell clients who got the bonus
+      bonusReceiver: partnerColor,
       bonusAmount: success ? GAME_CONSTANTS.SUCCESS_BONUS : -GAME_CONSTANTS.FAILURE_PENALTY
     });
     
@@ -622,6 +774,12 @@ io.on('connection', socket => {
     if (expiredPlayer) {
       console.log(`⏰ Player ${expiredPlayer}'s timer expired! Game Over.`);
       rooms[room].gameActive = false;
+      
+      // Clear number sequence trigger
+      if (rooms[room].numberSequenceTrigger) {
+        clearTimeout(rooms[room].numberSequenceTrigger);
+      }
+      
       io.to(room).emit('playerTimerExpired', { 
         color: expiredPlayer,
         personalTimers: rooms[room].personalTimers
@@ -629,83 +787,35 @@ io.on('connection', socket => {
       return;
     }
     
-    // Mark this player as having completed the round
-    rooms[room].roundCompleted[color] = true;
+    // IMMEDIATELY give this player a new random game
+    const gameTypes = ['findSix', 'findNine', 'colorMatch', 'shapeMemory', 'memoryChallenge'];
+    const randomGameType = gameTypes[Math.floor(Math.random() * gameTypes.length)];
+    const newGameAssignment = {
+      gameType: randomGameType,
+      gameData: generateGameData(randomGameType)
+    };
     
-    // Check if all players have completed the round
-    const allPlayersCompleted = Object.keys(rooms[room].players).every(
-      playerColor => rooms[room].roundCompleted[playerColor] === true
-    );
+    console.log(`🎮 ${color} gets new game immediately: ${randomGameType}`);
     
-    if (allPlayersCompleted) {
-      console.log(`All players completed round ${rooms[room].currentRound + 1} in room ${room}`);
-      
-      // Move to next round
-      rooms[room].currentRound++;
-      
-      // Reset completion tracking
-      Object.keys(rooms[room].players).forEach(playerColor => {
-        rooms[room].roundCompleted[playerColor] = false;
-        rooms[room].gameCompletionTracking[playerColor] = false;  // Allow new bonuses for next game
+    // Reset completion tracking for this player only
+    rooms[room].gameCompletionTracking[color] = false;
+    
+    // Send new game to this specific player only
+    const playerSocket = io.sockets.sockets.get(rooms[room].players[color].socketId);
+    if (playerSocket) {
+      playerSocket.emit('nextGameForYou', {
+        gameAssignment: newGameAssignment,
+        color: color,
+        personalTimers: rooms[room].personalTimers
       });
-      
-      // Check if we've completed all 3 rounds
-      if (rooms[room].currentRound >= 3) {
-        console.log(`All rounds completed in room ${room}, starting number sequence...`);
-        rooms[room].numberSequenceStarted = true;
-        
-        // Generate the number sequence
-        rooms[room].numberSequenceState = generateNumberSequence(rooms[room].players);
-        rooms[room].currentSequence = 1;
-        
-        console.log('Generated number sequence:', rooms[room].numberSequenceState);
-        
-        // Start the number sequence game for both players
-        setTimeout(() => {
-          // set authoritative start time for the number sequence
-          rooms[room].startTime = Date.now();
-
-          // Generate consistent positions for both players
-          const positions = generateNumberSequencePositions();
-          io.to(room).emit('startNumberSequence', {
-            sequenceData: rooms[room].numberSequenceState,
-            players: rooms[room].players,
-            positions: positions,
-            startTime: rooms[room].startTime
-          });
-          console.log(`StartNumberSequence event sent to room ${room} with positions:`, positions);
-        }, 1500);
-      } else {
-        // Start next round
-        const nextRound = rooms[room].gameSequence[rooms[room].currentRound];
-        const playerColors = Object.keys(rooms[room].players);
-        const gameAssignments = {};
-        
-        playerColors.forEach(playerColor => {
-          const gameType = nextRound[playerColor];
-          gameAssignments[playerColor] = {
-            gameType: gameType,
-            gameData: generateGameData(gameType)
-          };
-        });
-        
-        console.log(`Starting round ${rooms[room].currentRound + 1} in room ${room}:`, gameAssignments);
-        
-        // Send next round to both players after a short transition delay
-        setTimeout(() => {
-          // set authoritative start time for this next round
-          rooms[room].startTime = Date.now();
-
-          io.to(room).emit('nextRound', {
-            gameAssignments: gameAssignments,
-            round: rooms[room].currentRound + 1,
-            totalRounds: 3,
-            startTime: rooms[room].startTime,
-            personalTimers: rooms[room].personalTimers
-          });
-        }, 1500);
-      }
     }
+    
+    // CRITICAL FIX: Broadcast to ALL players (including this one) so everyone sees the correct game
+    io.to(room).emit('playerGameUpdate', {
+      color: color,
+      gameType: randomGameType,
+      gameData: newGameAssignment.gameData
+    });
   });
 
   socket.on('numberSequenceClick', ({ room, number, color }) => {
@@ -728,69 +838,55 @@ io.on('connection', socket => {
       
       // Check if game is completed
       if (gameState.currentSequence > 12) {
-        console.log(`Number sequence game completed in room ${room}! Game Over!`);
+        console.log(`✅ Number sequence completed in room ${room}! Returning to mini-games...`);
+        
+        // Stop Number Sequence timer
+        stopNumberSequenceTimer(room);
+        
+        rooms[room].inNumberSequence = false;
+        
+        // Reset all timers to full
+        Object.keys(rooms[room].personalTimers).forEach(color => {
+          rooms[room].personalTimers[color] = GAME_CONSTANTS.PERSONAL_TIMER_START;
+        });
+        
+        // Reset completion tracking
+        Object.keys(rooms[room].players).forEach(color => {
+          rooms[room].gameCompletionTracking[color] = false;
+        });
+        
+        console.log('All timers reset to full:', rooms[room].personalTimers);
+        
+        // Notify clients that number sequence is complete
         io.to(room).emit('numberSequenceCompleted');
         
-        // Game is complete - trigger game over
+        // Return to mini-games after short delay
         setTimeout(() => {
-          if (rooms[room]) {
-            const endTime = Date.now();
-            const duration = ((endTime - rooms[room].startTime) / 1000).toFixed(2);
-            const teamName = rooms[room].teamName;
-
-            if (!teamStats[teamName]) {
-              teamStats[teamName] = [];
-            }
-
-            teamStats[teamName].push({ 
-              time: parseFloat(duration), 
-              date: new Date().toISOString(),
-              players: Object.values(rooms[room].players).map(p => p.username),
-              completed: true
-            });
-
-            // Save team stats
-            saveTeamStats();
-
-            const completedTeams = Object.values(teamStats)
-              .filter(records => records.some(r => r.completed));
-            
-            const bestTime = completedTeams.length > 0 ? 
-              Math.min(...completedTeams.map(records => 
-                Math.min(...records.filter(r => r.completed).map(r => r.time))
-              )) : parseFloat(duration);
-            
-            const allBestTimes = completedTeams.map(records =>
-              Math.min(...records.filter(r => r.completed).map(r => r.time))
-            );
-            
-            const sorted = [...allBestTimes].sort((a, b) => a - b);
-            const rank = sorted.indexOf(bestTime) + 1;
-
-            console.log(`Game completed in room ${room}. Team: ${teamName}, Time: ${duration}s, Rank: ${rank}`);
-
-            io.to(room).emit('gameOver', {
-              teamName,
-              time: duration,
-              bestTime,
-              rank,
-              totalTeams: sorted.length,
-              completed: true,
-              top3: getTop3Teams()
-            });
-
-            // Mark room as completed but keep it for re-engagement
-            rooms[room].gameActive = false;
-            rooms[room].completed = true;
-            
-            // Set timeout to clean up room after 5 minutes if no re-engage
-            rooms[room].cleanupTimeout = setTimeout(() => {
-              if (rooms[room] && !reengageStatus[room]) {
-                console.log(`Cleaning up inactive room ${room} after 5 minutes`);
-                delete rooms[room];
-              }
-            }, 300000); // 5 minutes
-          }
+          if (!rooms[room] || !rooms[room].gameActive) return;
+          
+          // Generate random game for each player
+          const gameTypes = ['findSix', 'findNine', 'colorMatch', 'shapeMemory', 'memoryChallenge'];
+          const playerColors = Object.keys(rooms[room].players);
+          const gameAssignments = {};
+          
+          playerColors.forEach(color => {
+            const randomGameType = gameTypes[Math.floor(Math.random() * gameTypes.length)];
+            gameAssignments[color] = {
+              gameType: randomGameType,
+              gameData: generateGameData(randomGameType)
+            };
+          });
+          
+          console.log(`🔄 Returning to mini-games in room ${room}:`, gameAssignments);
+          
+          // Send all players back to mini-games
+          io.to(room).emit('returnToMiniGames', {
+            gameAssignments: gameAssignments,
+            personalTimers: rooms[room].personalTimers
+          });
+          
+          // Start new random trigger for next Number Sequence
+          startNumberSequenceTrigger(room);
         }, 2000);
       }
     } else {
@@ -912,6 +1008,14 @@ io.on('connection', socket => {
           // Stop timer countdown
           stopServerTimerCountdown(room);
           
+          // Clear number sequence trigger
+          if (rooms[room].numberSequenceTrigger) {
+            clearTimeout(rooms[room].numberSequenceTrigger);
+          }
+          
+          // Stop Number Sequence timer
+          stopNumberSequenceTimer(room);
+          
           delete rooms[room];
         } else {
           // Notify remaining player
@@ -1026,6 +1130,12 @@ io.on('connection', socket => {
       },
       timerInterval: null
     };
+    
+    // Initialize mini-games mode trigger for re-engage room
+    rooms[newRoom].inNumberSequence = false;
+    rooms[newRoom].numberSequenceTrigger = null;
+    rooms[newRoom].numberSequenceTimerInterval = null;
+    rooms[newRoom].numberSequenceTimer = GAME_CONSTANTS.NUMBER_SEQUENCE_TIME;
 
     // Move both players into newRoom (copy usernames/socketIds), and join sockets to newRoom
     roomPlayers.forEach(pc => {
@@ -1089,6 +1199,9 @@ io.on('connection', socket => {
 
       // Start server-side authoritative timer countdown
       startServerTimerCountdown(newRoom);
+      
+      // Start random trigger for Number Sequence (60-90 seconds)
+      startNumberSequenceTrigger(newRoom);
 
       console.log(`🎮 Started re-engaged game in room ${newRoom} - Round 1 assignments:`, gameAssignments);
     }, 13000);
@@ -1143,6 +1256,10 @@ setInterval(() => {
   for (const room in rooms) {
     if (Object.keys(rooms[room].players).length === 0) {
       stopServerTimerCountdown(room);  // Clean up timer interval
+      if (rooms[room].numberSequenceTrigger) {
+        clearTimeout(rooms[room].numberSequenceTrigger);
+      }
+      stopNumberSequenceTimer(room);  // Clean up Number Sequence timer
       delete rooms[room];
     }
   }

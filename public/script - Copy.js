@@ -2,8 +2,10 @@ const socket = io();
 
 // Game Constants
 const GAME_CONSTANTS = {
-  INITIAL_COUNTDOWN: 25,
-  NUMBER_SEQUENCE_TIME: 24,
+  INITIAL_COUNTDOWN: 25,  // Number of dots to display
+  PERSONAL_TIMER_START: 100,  // Starting time: 25 dots × 4 seconds = 100 seconds
+  NUMBER_SEQUENCE_TIME: 100,  // 25 dots × 4 seconds each = 100 seconds
+  SECONDS_PER_DOT: 4,  // Each dot represents 4 seconds
   TOTAL_ROUNDS: 3,
   MAX_NUMBERS: 12,
   MOUSE_EMIT_THROTTLE: 50,
@@ -17,12 +19,13 @@ let username = null;
 let timerInterval = null;
 let countdownInterval = null;
 let startTime = null;
+let totalTimeInterval = null;  // Track total elapsed time display
 // Personal timers for each player (replaced single countdown)
 let personalTimers = {
-  yellow: GAME_CONSTANTS.INITIAL_COUNTDOWN,
-  blue: GAME_CONSTANTS.INITIAL_COUNTDOWN,
-  red: GAME_CONSTANTS.INITIAL_COUNTDOWN,
-  green: GAME_CONSTANTS.INITIAL_COUNTDOWN
+  yellow: GAME_CONSTANTS.PERSONAL_TIMER_START,
+  blue: GAME_CONSTANTS.PERSONAL_TIMER_START,
+  red: GAME_CONSTANTS.PERSONAL_TIMER_START,
+  green: GAME_CONSTANTS.PERSONAL_TIMER_START
 };
 let gameCountdownActive = false;  // Flag to indicate when actual game countdown has started
 let partnerCursors = {};
@@ -938,10 +941,35 @@ socket.on('playersData', (data) => {
 
 // NEW: Socket handler for timer updates (bonuses/penalties)
 socket.on('timerUpdate', (data) => {
-  console.log('Timer update received:', data.personalTimers);
+  console.log('Timer update received:', data);
   if (data.personalTimers) {
     personalTimers = { ...data.personalTimers };
     updateCountdownDots();
+    
+    // Show visual feedback for who received the bonus/penalty
+    if (data.bonusReceiver && data.bonusAmount !== undefined) {
+      console.log(`🎁 ${data.bonusReceiver.toUpperCase()} received ${data.bonusAmount > 0 ? '+' : ''}${data.bonusAmount}s`);
+      
+      // Flash the section that received the bonus
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => {
+        if (section.classList.contains(`player-${data.bonusReceiver}`)) {
+          const originalBorder = section.style.border;
+          if (data.bonusAmount > 0) {
+            section.style.border = '5px solid #00ff00';
+            section.style.boxShadow = '0 0 30px #00ff00';
+          } else {
+            section.style.border = '5px solid #ff4444';
+            section.style.boxShadow = '0 0 30px #ff4444';
+          }
+          
+          setTimeout(() => {
+            section.style.border = originalBorder;
+            section.style.boxShadow = '';
+          }, 1000);
+        }
+      });
+    }
   }
 });
 
@@ -989,6 +1017,112 @@ socket.on('nextRound', (data) => {
   console.log('Next round loaded - personal timers continuing:', personalTimers);
 });
 
+// NEW: Handle individual game loading for specific player
+socket.on('nextGameForYou', (data) => {
+  console.log(`🎮 New game for ${data.color}:`, data.gameAssignment.gameType);
+  
+  // Update personal timers from server
+  if (data.personalTimers) {
+    personalTimers = { ...data.personalTimers };
+  }
+  
+  // Find which section this player is in
+  let mySection = 0;
+  for (let i = 1; i <= 4; i++) {
+    const section = document.getElementById(`section${i}`);
+    if (section && section.classList.contains(`player-${data.color}`)) {
+      mySection = i;
+      break;
+    }
+  }
+  
+  if (mySection > 0) {
+    // Load new game only in my section
+    loadGameInSection(mySection, data.gameAssignment.gameType, data.gameAssignment.gameData, data.color);
+    console.log(`Loaded ${data.gameAssignment.gameType} in section ${mySection} for ${data.color}`);
+  }
+});
+
+// CRITICAL FIX: Handle game updates for all players so everyone sees the correct games
+socket.on('playerGameUpdate', (data) => {
+  console.log(`📡 Player ${data.color} game update:`, data.gameType);
+  
+  // Find which section this player is in on MY screen
+  for (let i = 1; i <= 4; i++) {
+    const section = document.getElementById(`section${i}`);
+    if (section && section.classList.contains(`player-${data.color}`)) {
+      // Update the game in that section
+      const isMyGame = (data.color === color);
+      loadGameInSection(i, data.gameType, data.gameData, data.color);
+      console.log(`Updated section ${i} to show ${data.color}'s ${data.gameType}`);
+      break;
+    }
+  }
+});
+
+// NEW: Handle forced transition to Number Sequence
+socket.on('forceNumberSequence', (data) => {
+  console.log('🚨 FORCED NUMBER SEQUENCE!');
+  
+  // Update timers to full
+  if (data.personalTimers) {
+    personalTimers = { ...data.personalTimers };
+    console.log('Timers reset to full:', personalTimers);
+  }
+  
+  // Clear any existing intervals
+  clearInterval(timerInterval);
+  clearInterval(countdownInterval);
+  timerInterval = null;
+  countdownInterval = null;
+  
+  // Start number sequence (same logic as startNumberSequence event)
+  stopFirstGameTimer();
+  
+  sequenceData = data.sequenceData;
+  currentSequenceNumber = 1;
+  
+  console.log('Forced sequence data:', sequenceData);
+  console.log('Forced position data:', data.positions);
+  
+  showNumberSequenceScreen();
+  applyPlayerColorsToSections(data.players);
+  setupNumberSequenceGame(data.sequenceData, data.positions);
+  
+  setTimeout(() => {
+    startNumberSequenceTimer();
+    startTotalTimeDisplay();  // Start total elapsed time display
+  }, 500);
+});
+
+// NEW: Handle return to mini-games after Number Sequence
+socket.on('returnToMiniGames', (data) => {
+  console.log('🔄 RETURNING TO MINI-GAMES!', data);
+  
+  stopTotalTimeDisplay();  // Stop total elapsed time display
+  
+  // Update timers to full
+  if (data.personalTimers) {
+    personalTimers = { ...data.personalTimers };
+    console.log('Timers reset to full:', personalTimers);
+  }
+  
+  // Show game screen if not already visible
+  showScreen('gameScreen');
+  
+  // Apply player colors to all sections
+  applyPlayerColors();
+  
+  // Load new games for all players
+  const playerColors = Object.keys(data.gameAssignments);
+  playerColors.forEach((playerColor, index) => {
+    const assignment = data.gameAssignments[playerColor];
+    loadGameInSection(index + 1, assignment.gameType, assignment.gameData, playerColor);
+  });
+  
+  console.log('Mini-games restarted with full timers');
+});
+
 socket.on('startNumberSequence', (data) => {
   console.log('=== STARTING NUMBER SEQUENCE ===');
   console.log('Received startNumberSequence event from server:', data);
@@ -1014,6 +1148,7 @@ socket.on('startNumberSequence', (data) => {
   
   setTimeout(() => {
     startNumberSequenceTimer();
+    startTotalTimeDisplay();  // Start total elapsed time display
   }, 500);
 });
 
@@ -1065,9 +1200,16 @@ socket.on('numberSequenceIncorrect', (data) => {
   }, 1000);
 });
 
+// NEW: Handle server-synchronized Number Sequence timer
+socket.on('numberSequenceTimerUpdate', (data) => {
+  numberSequenceTimer = data.timer;
+  updateNumberSequenceTimer();
+});
+
 socket.on('numberSequenceCompleted', () => {
   console.log('Number sequence game completed!');
   clearInterval(numberSequenceInterval);
+  stopTotalTimeDisplay();  // Stop total elapsed time display
   
   const statusElement = document.getElementById('numberSequenceStatus');
   statusElement.textContent = 'SEQUENCE COMPLETED! CALCULATING RESULTS...';
@@ -1425,10 +1567,12 @@ function updateCountdownDots() {
       container.innerHTML = '';
       for (let i = 0; i < GAME_CONSTANTS.INITIAL_COUNTDOWN; i++) {
         const dot = document.createElement('span');
-        dot.className = `dot ${i < sectionTimer ? 'active' : ''}`;
+        // Calculate how many dots should be active (each dot = 4 seconds)
+        const activeDots = Math.ceil(sectionTimer / GAME_CONSTANTS.SECONDS_PER_DOT);
+        dot.className = `dot ${i < activeDots ? 'active' : ''}`;
         
         // Apply player color to active dots based on section
-        if (i < sectionTimer) {
+        if (i < activeDots) {
           if (sectionColor === 'red') {
             dot.style.background = '#ff4444';
             dot.style.boxShadow = '0 0 10px #ff4444';
@@ -1513,6 +1657,7 @@ function setupFindSix(section, grid, isInteractive = true) {
         });
         
         if (value === 6 && !cell.dataset.found) {
+          // Correct click - mark as found
           cell.dataset.found = 'true';
           cell.style.color = '#00ff00';
           cell.style.textShadow = '0 0 15px #00ff00';
@@ -1520,17 +1665,22 @@ function setupFindSix(section, grid, isInteractive = true) {
           
           console.log(`Found six! ${foundSixes}/${totalSixes}`);
           
+          // Only complete if ALL sixes found
           if (foundSixes === totalSixes) {
-            console.log('All sixes found! Completing round...');
-            completeRound();
+            console.log('All sixes found! Completing round with SUCCESS');
+            setTimeout(() => {
+              completeRound(true);  // Success
+            }, 300);
           }
-        } else if (value !== 6) {
+        } else {
+          // Wrong click - immediate failure
           cell.style.color = '#ff4444';
           cell.style.textShadow = '0 0 15px #ff4444';
+          console.log('Wrong cell clicked - Completing round with FAILURE');
+          
           setTimeout(() => {
-            cell.style.color = '#ffffff';
-            cell.style.textShadow = '0 0 15px #ffffff, 0 0 25px #ffffff';
-          }, 500);
+            completeRound(false);  // Failure
+          }, 300);
         }
       };
     } else {
@@ -1606,6 +1756,7 @@ function setupFindNine(section, grid, isInteractive = true) {
         });
         
         if (value === 9 && !cell.dataset.found) {
+          // Correct click - mark as found
           cell.dataset.found = 'true';
           cell.style.color = '#00ff00';
           cell.style.textShadow = '0 0 15px #00ff00';
@@ -1613,17 +1764,22 @@ function setupFindNine(section, grid, isInteractive = true) {
           
           console.log(`Found nine! ${foundNines}/${totalNines}`);
           
+          // Only complete if ALL nines found
           if (foundNines === totalNines) {
-            console.log('All nines found! Completing round...');
-            completeRound();
+            console.log('All nines found! Completing round with SUCCESS');
+            setTimeout(() => {
+              completeRound(true);  // Success
+            }, 300);
           }
-        } else if (value !== 9) {
+        } else {
+          // Wrong click - immediate failure
           cell.style.color = '#ff4444';
           cell.style.textShadow = '0 0 15px #ff4444';
+          console.log('Wrong cell clicked - Completing round with FAILURE');
+          
           setTimeout(() => {
-            cell.style.color = '#ffffff';
-            cell.style.textShadow = '0 0 15px #ffffff, 0 0 25px #ffffff';
-          }, 500);
+            completeRound(false);  // Failure
+          }, 300);
         }
       };
     } else {
@@ -1794,7 +1950,7 @@ function setupColorMatch(section, isInteractive = true) {
       });
       
       if (wasCorrect) {
-        console.log('Color match correct! Completing round...');
+        console.log('Color match correct! Completing round with SUCCESS...');
         
         // Set global completed flag to stop partner's cycling
         colorMatchIntervals[sectionKey].completed = true;
@@ -1810,18 +1966,28 @@ function setupColorMatch(section, isInteractive = true) {
         statusMessage.style.color = '#00ff00';
         
         setTimeout(() => {
-          completeRound();
+          completeRound(true);  // Success
         }, 300);
       } else {
+        console.log('Color match WRONG! Completing round with FAILURE...');
+        
+        // Set global completed flag
+        colorMatchIntervals[sectionKey].completed = true;
+        gameCompleted = true;
+        
         colorCircle.style.border = '3px solid #ff4444';
         colorCircle.style.boxShadow = '0 0 25px #ff4444';
         
+        clearInterval(colorInterval);
+        clearInterval(nameInterval);
+        
+        const statusMessage = document.getElementById(`statusMessage${section}`);
+        statusMessage.textContent = 'WRONG!';
+        statusMessage.style.color = '#ff4444';
+        
         setTimeout(() => {
-          if (!gameCompleted) {
-            colorCircle.style.border = '3px solid #00ff00';
-            colorCircle.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.3)';
-          }
-        }, 500);
+          completeRound(false);  // Failure
+        }, 300);
       }
     };
   } else {
@@ -1868,6 +2034,10 @@ function setupShapeMemory(section, isInteractive = true) {
     shapeDiv.style.fontSize = '4rem';
     shapeDiv.style.color = getColorHex(item.color);
     shapeDiv.style.textAlign = 'center';
+    // Add class for circle to normalize size
+    if (item.shape === '●') {
+      shapeDiv.classList.add('shape-circle');
+    }
     memContainer.appendChild(shapeDiv);
   });
   
@@ -1909,6 +2079,10 @@ function setupShapeMemory(section, isInteractive = true) {
       optionDiv.style.padding = '20px';
       optionDiv.style.border = '2px solid transparent';
       optionDiv.style.borderRadius = '10px';
+      // Add class for circle to normalize size
+      if (option.shape === '●') {
+        optionDiv.classList.add('shape-circle');
+      }
       
       optionDiv.onmouseenter = () => {
         if (ownCursor && isInteractive) ownCursor.style.transform = 'scale(1.3)';
@@ -1936,24 +2110,23 @@ function setupShapeMemory(section, isInteractive = true) {
           });
           
           if (isCorrect) {
-            console.log('Shape memory correct! Completing round...');
+            console.log('Shape memory correct! Completing round with SUCCESS...');
             optionDiv.style.border = '2px solid #00ff00';
             statusMessage.textContent = 'CORRECT!';
             statusMessage.style.color = '#00ff00';
             
             setTimeout(() => {
-              completeRound();
-            }, 1000);
+              completeRound(true);  // Success
+            }, 500);
           } else {
+            console.log('Shape memory WRONG! Completing round with FAILURE...');
             optionDiv.style.border = '2px solid #ff4444';
-            statusMessage.textContent = 'WRONG! TRY AGAIN';
+            statusMessage.textContent = 'WRONG!';
             statusMessage.style.color = '#ff4444';
             
             setTimeout(() => {
-              optionDiv.style.border = '2px solid transparent';
-              statusMessage.textContent = 'SELECT THE MATCHING SHAPE';
-              statusMessage.style.color = '#00ff00';
-            }, 1000);
+              completeRound(false);  // Failure
+            }, 500);
           }
         };
       } else {
@@ -1985,7 +2158,8 @@ function setupMemoryChallenge(section, isInteractive = true) {
     currentChallenge: null,
     consecutiveType1: 0,
     consecutiveType2: 0,
-    maxConsecutive: 3
+    maxConsecutive: 3,
+    transitionTimeout: null  // Track timeout for cleanup
   };
 
   const colors = ['#ff4444', '#4444ff', '#44aa44', '#ffaa00'];
@@ -2049,9 +2223,16 @@ function setupMemoryChallenge(section, isInteractive = true) {
     memoryContainer.appendChild(memoryDisplay);
     colorMatchGame.appendChild(memoryContainer);
 
+    // Clear any existing transition timeout
+    if (gameState.transitionTimeout) {
+      clearTimeout(gameState.transitionTimeout);
+      gameState.transitionTimeout = null;
+    }
+
     // Transition to challenge phase after 4 seconds
     waitForCountdownThen(() => {
-      if (gameState.active) {
+      // Only proceed if the game is still active and container still exists
+      if (gameState.active && memoryContainer.parentNode) {
         memoryContainer.remove();
         setupChallengePhase();
       }
@@ -2172,20 +2353,19 @@ function setupMemoryChallenge(section, isInteractive = true) {
             
             gameState.active = false;
             setTimeout(() => {
-              completeRound();
+              completeRound(true);  // Success
             }, 500);
           } else {
             option.style.boxShadow = '0 0 0 3px #000, 0 0 0 8px #ff4444, 0 0 20px #ff4444';
             
             const statusMessage = document.getElementById(`statusMessage${section}`);
-            statusMessage.textContent = 'WRONG! TRY AGAIN';
+            statusMessage.textContent = 'WRONG!';
             statusMessage.style.color = '#ff4444';
             
+            gameState.active = false;
             setTimeout(() => {
-              option.style.boxShadow = '0 0 0 3px #000, 0 0 0 6px currentColor';
-              statusMessage.textContent = 'SELECT THE CORRECT COLOR';
-              statusMessage.style.color = '#00ff00';
-            }, 1000);
+              completeRound(false);  // Failure
+            }, 500);
           }
         };
       } else {
@@ -2283,20 +2463,19 @@ function setupMemoryChallenge(section, isInteractive = true) {
             
             gameState.active = false;
             setTimeout(() => {
-              completeRound();
+              completeRound(true);  // Success
             }, 500);
           } else {
             option.style.boxShadow = '0 0 0 3px #000, 0 0 0 8px #ff4444, 0 0 20px #ff4444';
             
             const statusMessage = document.getElementById(`statusMessage${section}`);
-            statusMessage.textContent = 'WRONG! TRY AGAIN';
+            statusMessage.textContent = 'WRONG!';
             statusMessage.style.color = '#ff4444';
             
+            gameState.active = false;
             setTimeout(() => {
-              option.style.boxShadow = '0 0 0 3px #000, 0 0 0 6px #ffffff';
-              statusMessage.textContent = 'SELECT THE CORRECT TOTAL';
-              statusMessage.style.color = '#00ff00';
-            }, 1000);
+              completeRound(false);  // Failure
+            }, 500);
           }
         };
       } else {
@@ -2370,6 +2549,25 @@ function setupNumberSequenceGame(sequenceData, positions) {
   gameContainer.style.position = 'relative';
   gameContainer.style.background = 'transparent';
   
+  // Create Total Time Display in center
+  const totalTimeDisplay = document.createElement('div');
+  totalTimeDisplay.id = 'totalTimeDisplay';
+  totalTimeDisplay.className = 'total-time-display';
+  
+  const totalTimeLabel = document.createElement('div');
+  totalTimeLabel.className = 'total-time-label';
+  totalTimeLabel.textContent = 'TOTAL TIME';
+  
+  const totalTimeValue = document.createElement('div');
+  totalTimeValue.id = 'totalTimeValue';
+  totalTimeValue.className = 'total-time-value';
+  totalTimeValue.textContent = '00:00:00';
+  
+  totalTimeDisplay.appendChild(totalTimeLabel);
+  totalTimeDisplay.appendChild(totalTimeValue);
+  gameContainer.appendChild(totalTimeDisplay);
+  
+  // Create numbered circles
   for (let number = 1; number <= 12; number++) {
     const circle = document.createElement('div');
     circle.className = `number-circle ${sequenceData[number]}`;
@@ -2432,40 +2630,31 @@ function handleNumberSequenceClick(event) {
 }
 
 function startNumberSequenceTimer() {
-  console.log('Starting 24-second timer for number sequence game');
+  console.log('Initializing Number Sequence timer (server-authoritative)');
   numberSequenceTimer = GAME_CONSTANTS.NUMBER_SEQUENCE_TIME;
   updateNumberSequenceTimer();
   
+  // Clear any existing interval - server will send updates
   clearInterval(numberSequenceInterval);
-  numberSequenceInterval = setInterval(() => {
-    numberSequenceTimer--;
-    console.log(`Number sequence timer: ${numberSequenceTimer}s`);
-    updateNumberSequenceTimer();
-    
-    if (numberSequenceTimer <= 0) {
-      console.log('Number sequence game timeout!');
-      clearInterval(numberSequenceInterval);
-      const statusElement = document.getElementById('numberSequenceStatus');
-      statusElement.textContent = 'TIME EXPIRED! MISSION FAILED';
-      statusElement.style.color = '#ff4444';
-      
-      setTimeout(() => {
-        socket.emit('timeout', { room });
-      }, 2000);
-    }
-  }, 1000);
+  numberSequenceInterval = null;
+  
+  // Note: Timer updates now come from server via 'numberSequenceTimerUpdate' event
+  // No local countdown needed - server is authoritative
 }
 
 function updateNumberSequenceTimer() {
   const timerContainer = document.getElementById('numberSequenceTimer');
   timerContainer.innerHTML = '';
   
-  for (let i = 0; i < GAME_CONSTANTS.NUMBER_SEQUENCE_TIME; i++) {
+  // Always show 25 dots, each representing 4 seconds
+  for (let i = 0; i < GAME_CONSTANTS.INITIAL_COUNTDOWN; i++) {
     const dot = document.createElement('div');
-    dot.className = `timer-dot ${i < numberSequenceTimer ? '' : 'expired'}`;
+    // Calculate how many dots should be active (each dot = 4 seconds)
+    const activeDots = Math.ceil(numberSequenceTimer / GAME_CONSTANTS.SECONDS_PER_DOT);
+    dot.className = `timer-dot ${i < activeDots ? '' : 'expired'}`;
     
     // Add white color style for number sequence timer
-    if (i < numberSequenceTimer) {
+    if (i < activeDots) {
       dot.style.background = '#ffffff';
       dot.style.boxShadow = '0 0 5px #ffffff';
     } else {
@@ -2474,6 +2663,51 @@ function updateNumberSequenceTimer() {
     }
     
     timerContainer.appendChild(dot);
+  }
+}
+
+// Total Time Display Functions
+function startTotalTimeDisplay() {
+  console.log('Starting total time display');
+  
+  // Clear any existing interval
+  if (totalTimeInterval) {
+    clearInterval(totalTimeInterval);
+  }
+  
+  // Update immediately
+  updateTotalTimeDisplay();
+  
+  // Update every second
+  totalTimeInterval = setInterval(updateTotalTimeDisplay, 1000);
+}
+
+function updateTotalTimeDisplay() {
+  if (!startTime) return;
+  
+  const totalTimeElement = document.getElementById('totalTimeValue');
+  if (!totalTimeElement) return;
+  
+  const elapsed = Date.now() - startTime;
+  const totalSeconds = Math.floor(elapsed / 1000);
+  
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  const timeString = 
+    String(hours).padStart(2, '0') + ':' +
+    String(minutes).padStart(2, '0') + ':' +
+    String(seconds).padStart(2, '0');
+  
+  totalTimeElement.textContent = timeString;
+}
+
+function stopTotalTimeDisplay() {
+  if (totalTimeInterval) {
+    clearInterval(totalTimeInterval);
+    totalTimeInterval = null;
+    console.log('Stopped total time display');
   }
 }
 

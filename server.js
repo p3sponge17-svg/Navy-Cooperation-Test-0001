@@ -291,7 +291,7 @@ function getTop3Teams() {
   for (const [teamName, records] of Object.entries(teamStats)) {
     const completedGames = records.filter(r => r.completed);
     if (completedGames.length > 0) {
-      const bestTime = Math.min(...completedGames.map(r => r.time));
+      const bestTime = Math.max(...completedGames.map(r => r.time));
       const bestGame = completedGames.find(r => r.time === bestTime);
       
       completedTeams.push({
@@ -303,7 +303,7 @@ function getTop3Teams() {
     }
   }
   
-  completedTeams.sort((a, b) => a.time - b.time);
+  completedTeams.sort((a, b) => b.time - a.time);
   return completedTeams.slice(0, 3);
 }
 
@@ -361,11 +361,66 @@ function startServerTimerCountdown(room) {
         clearInterval(rooms[room].timerInterval);
         rooms[room].timerInterval = null;
         
-        // Notify all players
-        io.to(room).emit('playerTimerExpired', {
-          color: expiredPlayer,
-          personalTimers: rooms[room].personalTimers
+        // Clear number sequence trigger
+        if (rooms[room].numberSequenceTrigger) {
+          clearTimeout(rooms[room].numberSequenceTrigger);
+        }
+        
+        // Calculate game stats for failure screen
+        const endTime = Date.now();
+        const duration = ((endTime - rooms[room].startTime) / 1000).toFixed(2);
+        const teamName = rooms[room].teamName;
+        
+        // Save to team stats
+        if (!teamStats[teamName]) {
+          teamStats[teamName] = [];
+        }
+        
+        teamStats[teamName].push({
+          time: parseFloat(duration),
+          date: new Date().toISOString(),
+          players: Object.values(rooms[room].players).map(p => p.username),
+          timeout: true,
+          completed: false,
+          reason: `Player ${expiredPlayer.toUpperCase()} timer expired`
         });
+        
+        saveTeamStats();
+        
+        // Get leaderboard data
+        const completedTeams = Object.values(teamStats)
+          .filter(records => records.some(r => r.completed));
+        
+        const bestTime = completedTeams.length > 0 ? 
+          Math.max(...completedTeams.map(records => 
+            Math.max(...records.filter(r => r.completed).map(r => r.time))
+          )) : parseFloat(duration);
+        
+        const allBestTimes = completedTeams.map(records =>
+          Math.max(...records.filter(r => r.completed).map(r => r.time))
+        );
+        
+        const sorted = [...allBestTimes].sort((a, b) => b - a);
+        const rank = sorted.length > 0 ? (sorted.indexOf(bestTime) + 1) : 1;
+        
+        // Emit gameOver with full data for failure screen
+        io.to(room).emit('gameOver', {
+          teamName,
+          time: duration,
+          bestTime,
+          rank,
+          totalTeams: Math.max(sorted.length, 1),
+          timeout: true,
+          completed: false,
+          players: Object.values(rooms[room].players).map(p => p.username),
+          top3: getTop3Teams(),
+          reason: `Player ${expiredPlayer.toUpperCase()} timer expired`
+        });
+        
+        console.log(`Game over - Player timer expired in room ${room}. Team: ${teamName}, Time: ${duration}s`);
+        
+        // Mark room as completed
+        rooms[room].completed = true;
       }
     }
   }, 1000); // Run every 1 second
@@ -424,10 +479,66 @@ function startNumberSequenceTimer(room) {
       clearInterval(rooms[room].numberSequenceTimerInterval);
       rooms[room].numberSequenceTimerInterval = null;
       
-      // Notify all players
-      io.to(room).emit('numberSequenceFailed', {
-        reason: 'Timer expired'
+      // Clear number sequence trigger
+      if (rooms[room].numberSequenceTrigger) {
+        clearTimeout(rooms[room].numberSequenceTrigger);
+      }
+      
+      // Calculate game stats for failure screen
+      const endTime = Date.now();
+      const duration = ((endTime - rooms[room].startTime) / 1000).toFixed(2);
+      const teamName = rooms[room].teamName;
+      
+      // Save to team stats
+      if (!teamStats[teamName]) {
+        teamStats[teamName] = [];
+      }
+      
+      teamStats[teamName].push({
+        time: parseFloat(duration),
+        date: new Date().toISOString(),
+        players: Object.values(rooms[room].players).map(p => p.username),
+        timeout: true,
+        completed: false,
+        reason: 'Number Sequence timer expired'
       });
+      
+      saveTeamStats();
+      
+      // Get leaderboard data
+      const completedTeams = Object.values(teamStats)
+        .filter(records => records.some(r => r.completed));
+      
+      const bestTime = completedTeams.length > 0 ? 
+        Math.max(...completedTeams.map(records => 
+          Math.max(...records.filter(r => r.completed).map(r => r.time))
+        )) : parseFloat(duration);
+      
+      const allBestTimes = completedTeams.map(records =>
+        Math.max(...records.filter(r => r.completed).map(r => r.time))
+      );
+      
+      const sorted = [...allBestTimes].sort((a, b) => b - a);
+      const rank = sorted.length > 0 ? (sorted.indexOf(bestTime) + 1) : 1;
+      
+      // Emit gameOver with full data for failure screen
+      io.to(room).emit('gameOver', {
+        teamName,
+        time: duration,
+        bestTime,
+        rank,
+        totalTeams: Math.max(sorted.length, 1),
+        timeout: true,
+        completed: false,
+        players: Object.values(rooms[room].players).map(p => p.username),
+        top3: getTop3Teams(),
+        reason: 'Number Sequence timer expired'
+      });
+      
+      console.log(`Game over - Number Sequence timer expired in room ${room}. Team: ${teamName}, Time: ${duration}s`);
+      
+      // Mark room as completed
+      rooms[room].completed = true;
     }
   }, 1000); // Run every 1 second
 }
@@ -780,10 +891,61 @@ io.on('connection', socket => {
         clearTimeout(rooms[room].numberSequenceTrigger);
       }
       
-      io.to(room).emit('playerTimerExpired', { 
-        color: expiredPlayer,
-        personalTimers: rooms[room].personalTimers
+      // Calculate game stats for failure screen
+      const endTime = Date.now();
+      const duration = ((endTime - rooms[room].startTime) / 1000).toFixed(2);
+      const teamName = rooms[room].teamName;
+      
+      // Save to team stats
+      if (!teamStats[teamName]) {
+        teamStats[teamName] = [];
+      }
+      
+      teamStats[teamName].push({
+        time: parseFloat(duration),
+        date: new Date().toISOString(),
+        players: Object.values(rooms[room].players).map(p => p.username),
+        timeout: true,
+        completed: false,
+        reason: `Player ${expiredPlayer.toUpperCase()} timer expired`
       });
+      
+      saveTeamStats();
+      
+      // Get leaderboard data
+      const completedTeams = Object.values(teamStats)
+        .filter(records => records.some(r => r.completed));
+      
+      const bestTime = completedTeams.length > 0 ? 
+        Math.max(...completedTeams.map(records => 
+          Math.max(...records.filter(r => r.completed).map(r => r.time))
+        )) : parseFloat(duration);
+      
+      const allBestTimes = completedTeams.map(records =>
+        Math.max(...records.filter(r => r.completed).map(r => r.time))
+      );
+      
+      const sorted = [...allBestTimes].sort((a, b) => b - a);
+      const rank = sorted.length > 0 ? (sorted.indexOf(bestTime) + 1) : 1;
+      
+      // Emit gameOver with full data for failure screen
+      io.to(room).emit('gameOver', {
+        teamName,
+        time: duration,
+        bestTime,
+        rank,
+        totalTeams: Math.max(sorted.length, 1),
+        timeout: true,
+        completed: false,
+        players: Object.values(rooms[room].players).map(p => p.username),
+        top3: getTop3Teams(),
+        reason: `Player ${expiredPlayer.toUpperCase()} timer expired`
+      });
+      
+      console.log(`Game over - Player timer expired in room ${room}. Team: ${teamName}, Time: ${duration}s`);
+      
+      // Mark room as completed
+      rooms[room].completed = true;
       return;
     }
     
@@ -924,15 +1086,15 @@ io.on('connection', socket => {
       .filter(records => records.some(r => r.completed));
     
     const bestTime = completedTeams.length > 0 ? 
-      Math.min(...completedTeams.map(records => 
-        Math.min(...records.filter(r => r.completed).map(r => r.time))
+      Math.max(...completedTeams.map(records => 
+        Math.max(...records.filter(r => r.completed).map(r => r.time))
       )) : parseFloat(duration);
     
     const allBestTimes = completedTeams.map(records =>
-      Math.min(...records.filter(r => r.completed).map(r => r.time))
+      Math.max(...records.filter(r => r.completed).map(r => r.time))
     );
     
-    const sorted = [...allBestTimes].sort((a, b) => a - b);
+    const sorted = [...allBestTimes].sort((a, b) => b - a);
     const rank = sorted.length > 0 ? (sorted.indexOf(bestTime) + 1) : 1;
 
     io.to(room).emit('gameOver', {

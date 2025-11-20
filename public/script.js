@@ -951,19 +951,6 @@ socket.on('timerUpdate', (data) => {
 });
 
 // NEW: Socket handler for when a player's timer expires
-socket.on('playerTimerExpired', (data) => {
-  console.log(`Player ${data.color}'s timer expired!`, data);
-  stopAllTimers();
-  personalTimers = { ...data.personalTimers };
-  updateCountdownDots();
-  
-  // Show game over screen
-  // We'll implement proper end game logic in later phases
-  setTimeout(() => {
-    alert(`Player ${data.color.toUpperCase()}'s timer expired! Game Over!`);
-  }, 500);
-});
-
 socket.on('nextRound', (data) => {
   console.log('Loading next round:', data);
   
@@ -2669,12 +2656,10 @@ function updateTotalTimeDisplay() {
   const totalSeconds = Math.floor(elapsed / 1000);
   const hundredths = Math.floor((elapsed % 1000) / 10); // Get hundredths of a second
   
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   
   const timeString = 
-    String(hours).padStart(2, '0') + ':' +
     String(minutes).padStart(2, '0') + ':' +
     String(seconds).padStart(2, '0') + ':' +
     String(hundredths).padStart(2, '0');

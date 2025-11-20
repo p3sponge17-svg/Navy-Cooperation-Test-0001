@@ -476,31 +476,8 @@ function populateFourPlayerGrid(playersData) {
     }
   });
   
-  // Update the countdown timer
-  updateFourPlayerCountdownTimer();
-}
-
-// NEW: Update the 4-player countdown timer
-function updateFourPlayerCountdownTimer() {
-  const timerElement = document.getElementById('fourPlayerCountdownTimer');
-  
-  const updateTimer = () => {
-    const currentTime = Date.now();
-    const elapsed = Math.floor((currentTime - fourPlayerCountdownStartTime) / 1000);
-    const remaining = Math.max(0, 5 - elapsed);
-    
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-    
-    timerElement.textContent = `00:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
-    if (remaining > 0) {
-      requestAnimationFrame(updateTimer);
-    }
-  };
-  
-  fourPlayerCountdownStartTime = Date.now();
-  updateTimer();
+  // Note: Countdown timer is now handled by startFourPlayerGridCountdown()
+  // which was already called before this function
 }
 
 // Helper function to generate a fake IP address
@@ -974,19 +951,6 @@ socket.on('timerUpdate', (data) => {
 });
 
 // NEW: Socket handler for when a player's timer expires
-socket.on('playerTimerExpired', (data) => {
-  console.log(`Player ${data.color}'s timer expired!`, data);
-  stopAllTimers();
-  personalTimers = { ...data.personalTimers };
-  updateCountdownDots();
-  
-  // Show game over screen
-  // We'll implement proper end game logic in later phases
-  setTimeout(() => {
-    alert(`Player ${data.color.toUpperCase()}'s timer expired! Game Over!`);
-  }, 500);
-});
-
 socket.on('nextRound', (data) => {
   console.log('Loading next round:', data);
   
@@ -2678,8 +2642,8 @@ function startTotalTimeDisplay() {
   // Update immediately
   updateTotalTimeDisplay();
   
-  // Update every second
-  totalTimeInterval = setInterval(updateTotalTimeDisplay, 1000);
+  // Update every 10ms for smooth hundredths display
+  totalTimeInterval = setInterval(updateTotalTimeDisplay, 10);
 }
 
 function updateTotalTimeDisplay() {
@@ -2690,6 +2654,7 @@ function updateTotalTimeDisplay() {
   
   const elapsed = Date.now() - startTime;
   const totalSeconds = Math.floor(elapsed / 1000);
+  const hundredths = Math.floor((elapsed % 1000) / 10); // Get hundredths of a second
   
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -2698,7 +2663,8 @@ function updateTotalTimeDisplay() {
   const timeString = 
     String(hours).padStart(2, '0') + ':' +
     String(minutes).padStart(2, '0') + ':' +
-    String(seconds).padStart(2, '0');
+    String(seconds).padStart(2, '0') + ':' +
+    String(hundredths).padStart(2, '0');
   
   totalTimeElement.textContent = timeString;
 }
